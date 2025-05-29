@@ -1,0 +1,12 @@
+<Context>
+    <Resource name="jdbc/YourDB"
+              auth="Container"
+              type="javax.sql.DataSource"
+              username="root"
+              password="1234"
+              driverClassName="com.mysql.cj.jdbc.Driver"
+              url="jdbc:mysql://mysql:3306/snackshop_db"
+              maxTotal="20"
+              maxIdle="10"
+              maxWaitMillis="-1"/>
+</Context>
