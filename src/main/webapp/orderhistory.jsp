@@ -9,15 +9,17 @@
 		<div class="col-lg-3">
 			<div class="bg-light p-30 mb-5">
 				<h5 class="section-title position-relative text-uppercase mb-3">
-					<span class="bg-secondary pr-3">User Menu</span>
+					<span class="bg-secondary pr-3"><fmt:message key="user.menu" /></span>
 				</h5>
 				<div class="list-group">
 					<a href="profile"
-						class="list-group-item list-group-item-action"> Profile
+						class="list-group-item list-group-item-action"> <fmt:message key="footer.profile" />
 					</a> <a href="orderhistory"
-						class="list-group-item list-group-item-action active"> Order History
+						class="list-group-item list-group-item-action active"> <fmt:message key="footer.orderHistory" />
 					</a>
-					<a href="changepassword" class="list-group-item list-group-item-action">Change Password</a>
+					<c:if test="${user.hashedPassword != null}">
+						<a href="changepassword" class="list-group-item list-group-item-action"><fmt:message key="footer.changePassword" /></a>
+					</c:if>
 				</div>
 			</div>
 		</div>
@@ -26,7 +28,7 @@
 		<div class="col-lg-9">
 			<div class="bg-light p-30 mb-5">
 				<h5 class="section-title position-relative text-uppercase mb-3">
-					<span class="bg-secondary pr-3">Order History</span>
+					<span class="bg-secondary pr-3"><fmt:message key="footer.orderHistory" /></span>
 				</h5>
 
 				<c:if test="${not empty orders}">
@@ -34,10 +36,10 @@
 						<table class="table table-bordered">
 							<thead>
 								<tr>
-									<th>Order ID</th>
-									<th>Order Date</th>
-									<th>Total Amount</th>
-									<th>Details</th>
+									<th><fmt:message key="admin.id" /></th>
+									<th><fmt:message key="orderhistory.orderDate" /></th>
+									<th><fmt:message key="orderhistory.totalAmount" /></th>
+									<th><fmt:message key="orderhistory.details" /></th>
 								</tr>
 							</thead>
 							<tbody>
@@ -45,11 +47,11 @@
 									<tr>
 										<td>${order.id}</td>
 										<td>${order.orderDate}</td>
-										<td>${order.total}đ</td>
+										<td><fmt:formatNumber value="${order.total}" pattern="#,##0.## ₫"/></td>
 										<td>
 											<button type="button" class="btn btn-info"
 												data-toggle="collapse" data-target="#details${order.id}">
-												View Details</button>
+												<fmt:message key="button.viewDetails" /></button>
 										</td>
 									</tr>
 									<!-- Order Details -->
@@ -58,11 +60,11 @@
 											<table class="table table-striped">
 												<thead>
 													<tr>
-														<th>Product</th>
-														<th>Variant</th>
-														<th>Quantity</th>
-														<th>Price</th>
-														<th>Total</th>
+														<th><fmt:message key="orderhistory.product" /></th>
+														<th><fmt:message key="orderhistory.variant" /></th>
+														<th><fmt:message key="cart.quantity" /></th>
+														<th><fmt:message key="cart.price" /></th>
+														<th><fmt:message key="cart.total" /></th>
 													</tr>
 												</thead>
 												<tbody>
@@ -71,8 +73,8 @@
 															<td>${item.productName}</td>
 															<td>${item.variantName}</td>
 															<td>${item.quantity}</td>
-															<td>${item.price}đ</td>
-															<td>${item.totalPrice}đ</td>
+															<td><fmt:formatNumber value="${item.price}" pattern="#,##0.## ₫"/></td>
+															<td><fmt:formatNumber value="${item.totalPrice}" pattern="#,##0.## ₫"/></td>
 														</tr>
 													</c:forEach>
 												</tbody>
@@ -86,7 +88,7 @@
 				</c:if>
 
 				<c:if test="${empty orders}">
-					<p class="text-center">You have no order history.</p>
+					<p class="text-center"><fmt:message key="orderhistory.noOrders" /></p>
 				</c:if>
 			</div>
 		</div>

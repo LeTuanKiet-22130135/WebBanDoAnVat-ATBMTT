@@ -10,9 +10,9 @@
             <h5 class="text-secondary text-uppercase mb-4">
                 <fmt:message key="footer.getInTouch" />
             </h5>
-            <p class="mb-2"><i class="fa fa-map-marker-alt text-primary mr-3"></i>123 Street, New York, USA</p>
+            <p class="mb-2"><i class="fa fa-map-marker-alt text-primary mr-3"></i>Khu phố 6, Phường Linh Trung, TP Thủ Đức</p>
             <p class="mb-2"><i class="fa fa-envelope text-primary mr-3"></i>info@example.com</p>
-            <p class="mb-0"><i class="fa fa-phone-alt text-primary mr-3"></i>+012 345 67890</p>
+            <p class="mb-0"><i class="fa fa-phone-alt text-primary mr-3"></i>0934567890</p>
         </div>
         <div class="col-lg-8 col-md-12">
             <div class="row">
@@ -21,10 +21,10 @@
                         <fmt:message key="footer.quickShop" />
                     </h5>
                     <div class="d-flex flex-column justify-content-start">
-                        <a class="text-secondary mb-2" href="index"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.home" /></a>
-                        <a class="text-secondary mb-2" href="shop"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.shop" /></a>
-                        <a class="text-secondary mb-2" href="cart"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.cart" /></a>
-                        <a class="text-secondary mb-2" href="checkout"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.checkout" /></a>
+                        <a class="text-secondary mb-2" href="index.jsp"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.home" /></a>
+                        <a class="text-secondary mb-2" href="shop.jsp"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.shop" /></a>
+                        <a class="text-secondary mb-2" href="cart.jsp"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.cart" /></a>
+                        <a class="text-secondary mb-2" href="checkout.jsp"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.checkout" /></a>
                         <a class="text-secondary" href="contact.jsp"><i class="fa fa-angle-right mr-2"></i><fmt:message key="footer.contact" /></a>
                     </div>
                 </div>
@@ -67,8 +67,8 @@
     <div class="row border-top mx-xl-5 py-4" style="border-color: rgba(256, 256, 256, .1) !important;">
         <div class="col-md-6 px-xl-0">
             <p class="mb-md-0 text-center text-md-left text-secondary">
-                &copy; <a class="text-primary" href="#">Domain</a>. <fmt:message key="footer.allRightsReserved" />
-                <fmt:message key="footer.designedBy" /> <a class="text-primary" href="#">Le Tuan Kiet</a>
+                &copy; <a class="text-primary" href="#">shopanvat</a>. <fmt:message key="footer.allRightsReserved" />
+                <fmt:message key="footer.designedBy" /> <a class="text-primary" href="#">Nhóm 67</a>
             </p>
         </div>
         <div class="col-md-6 px-xl-0 text-center text-md-right">

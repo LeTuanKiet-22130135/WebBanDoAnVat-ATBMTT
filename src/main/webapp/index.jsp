@@ -4,6 +4,10 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <%@ include file="WEB-INF/header.jsp"%>
+<!-- Include jQuery if not already included in header -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Include custom cart JavaScript -->
+<script src="${pageContext.request.contextPath}/js/cart.js"></script>
 
 <!-- Carousel Start -->
 <div class="container-fluid mb-3">
@@ -78,14 +82,14 @@
 				<img class="img-fluid" src="img/offer-1.jpg" alt="">
 				<div class="offer-text">
 					<h3 class="text-white mb-3"><fmt:message key="carousel.specialOffer" /></h3>
-					<a href="shop" class="btn btn-primary"><fmt:message key="button.shopNow" /></a>
+					<a href="shop.jsp" class="btn btn-primary"><fmt:message key="button.shopNow" /></a>
 				</div>
 			</div>
 			<div class="product-offer mb-30" style="height: 200px;">
 				<img class="img-fluid" src="img/offer-2.jpg" alt="">
 				<div class="offer-text">
 					<h3 class="text-white mb-3"><fmt:message key="carousel.specialOffer" /></h3>
-					<a href="shop" class="btn btn-primary"><fmt:message key="button.shopNow" /></a>
+					<a href="shop.jsp" class="btn btn-primary"><fmt:message key="button.shopNow" /></a>
 				</div>
 			</div>
 		</div>
@@ -138,18 +142,38 @@
             <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div class="product-item bg-light mb-4">
                     <div class="product-img position-relative overflow-hidden">
-                        <img class="img-fluid w-100" src="${product.img}" alt="${product.name}">
+                        <img class="img-fluid w-100" src="${product.img}" alt="${product.name}" style="width: 433px; height: 433px; object-fit: contain;">
                         <div class="product-action">
-                            <a class="btn btn-outline-dark btn-square" href="#"><i class="fa fa-shopping-cart"></i></a>
-                            <a class="btn btn-outline-dark btn-square" href="#"><i class="far fa-heart"></i></a>
-                            <a class="btn btn-outline-dark btn-square" href="#"><i class="fa fa-sync-alt"></i></a>
+                            <a class="btn btn-outline-dark btn-square add-to-cart-btn" href="javascript:void(0)" data-product-id="${product.id}"><i class="fa fa-shopping-cart"></i></a>
                             <a class="btn btn-outline-dark btn-square" href="detail?id=${product.id}"><i class="fa fa-search"></i></a>
                         </div>
                     </div>
                     <div class="text-center py-4">
                         <a class="h6 text-decoration-none text-truncate" href="detail?id=${product.id}">${product.name}</a>
                         <div class="d-flex align-items-center justify-content-center mt-2">
-                            <h5>${product.price} đ</h5>
+                            <h5><fmt:formatNumber value="${product.price}" pattern="#,##0.## ₫"/></h5>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-center mb-1">
+                            <c:set var="rating" value="${sessionScope.productRatings[product.id] != null ? sessionScope.productRatings[product.id] : 0}" />
+                            <c:set var="reviewCount" value="${sessionScope.productReviewCounts[product.id] != null ? sessionScope.productReviewCounts[product.id] : 0}" />
+
+                            <c:set var="integerPart" value="${rating - (rating % 1)}" />
+                            <c:set var="decimalPart" value="${rating % 1}" />
+
+                            <c:forEach begin="1" end="5" var="i">
+                                <c:choose>
+                                    <c:when test="${i <= integerPart}">
+                                        <small class="fas fa-star text-primary mr-1"></small>
+                                    </c:when>
+                                    <c:when test="${i == integerPart + 1 && decimalPart >= 0.5}">
+                                        <small class="fas fa-star-half-alt text-primary mr-1"></small>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <small class="far fa-star text-primary mr-1"></small>
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:forEach>
+                            <small>(${reviewCount})</small>
                         </div>
                     </div>
                 </div>
@@ -159,5 +183,11 @@
 </div>
 <!-- Products End -->
 
+<script>
+    $(document).ready(function() {
+        // Initialize product listing page functionality
+        initProductListingPage();
+    });
+</script>
 
 <%@ include file="WEB-INF/footer.jsp"%>

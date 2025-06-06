@@ -8,12 +8,12 @@
         <div class="col-lg-3">
             <div class="bg-light p-30 mb-5">
                 <h5 class="section-title position-relative text-uppercase mb-3">
-                    <span class="bg-secondary pr-3">User Menu</span>
+                    <span class="bg-secondary pr-3"><fmt:message key="user.menu" /></span>
                 </h5>
                 <div class="list-group">
-                    <a href="profile" class="list-group-item list-group-item-action">Profile</a>
-                    <a href="orderhistory" class="list-group-item list-group-item-action">Order History</a>
-                    <a href="changepassword" class="list-group-item list-group-item-action active">Change Password</a>
+                    <a href="profile" class="list-group-item list-group-item-action"><fmt:message key="footer.profile" /></a>
+                    <a href="orderhistory" class="list-group-item list-group-item-action"><fmt:message key="footer.orderHistory" /></a>
+                    <a href="changepassword" class="list-group-item list-group-item-action active"><fmt:message key="footer.changePassword" /></a>
                 </div>
             </div>
         </div>
@@ -22,22 +22,22 @@
         <div class="col-lg-9">
             <div class="bg-light p-30 mb-5">
                 <h5 class="section-title position-relative text-uppercase mb-3">
-                    <span class="bg-secondary pr-3">Change Password</span>
+                    <span class="bg-secondary pr-3"><fmt:message key="footer.changePassword" /></span>
                 </h5>
                 <form action="changepassword" method="post" onsubmit="return validateForm()">
                     <div class="form-group">
-                        <label>Current Password</label>
+                        <label><fmt:message key="changepassword.currentPassword" /></label>
                         <input class="form-control" type="password" name="currentPassword" required>
                     </div>
                     <div class="form-group">
-                        <label>New Password</label>
+                        <label><fmt:message key="changepassword.newPassword" /></label>
                         <input class="form-control" type="password" name="newPassword" required>
                     </div>
                     <div class="form-group">
-                        <label>Repeat New Password</label>
+                        <label><fmt:message key="changepassword.repeatNewPassword" /></label>
                         <input class="form-control" type="password" name="repeatNewPassword" required>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-3">Change Password</button>
+                    <button type="submit" class="btn btn-primary mt-3"><fmt:message key="button.changePassword" /></button>
                 </form>
 
                 <c:if test="${not empty errorMessage}">

@@ -94,7 +94,11 @@ public class ProductDAO {
         return product;
     }
 
-    public List<Product> getProductsByCriteria(String query, String[] priceRanges) {
+    public List<Product> getProductsByCriteria(String query, String[] priceRanges, String[] typeIds) {
+        return getProductsByCriteriaWithPagination(query, priceRanges, typeIds, 0, Integer.MAX_VALUE);
+    }
+
+    public List<Product> getProductsByCriteriaWithPagination(String query, String[] priceRanges, String[] typeIds, int page, int pageSize) {
         List<Product> products = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM products");
         List<String> conditions = new ArrayList<>();
@@ -103,6 +107,107 @@ public class ProductDAO {
         if (query != null && !query.trim().isEmpty()) {
             conditions.add("name LIKE ?");
             parameters.add("%" + query + "%");
+        }
+
+        if (typeIds != null && typeIds.length > 0 && !Arrays.asList(typeIds).contains("all")) {
+            List<String> typeConditions = new ArrayList<>();
+            for (String typeId : typeIds) {
+                typeConditions.add("typeId = ?");
+                parameters.add(Integer.parseInt(typeId));
+            }
+            if (!typeConditions.isEmpty()) {
+                conditions.add("(" + String.join(" OR ", typeConditions) + ")");
+            }
+        }
+
+        if (priceRanges != null && priceRanges.length > 0 && !Arrays.asList(priceRanges).contains("all")) {
+            List<String> priceConditions = new ArrayList<>();
+            for (String range : priceRanges) {
+                String[] bounds = range.split("-");
+                if (bounds.length == 2) {
+                    priceConditions.add("EXISTS (SELECT 1 FROM variants v WHERE v.pid = products.id AND v.price BETWEEN ? AND ?)");
+                    parameters.add(new BigDecimal(bounds[0]));
+                    parameters.add(new BigDecimal(bounds[1]));
+                } else if (range.equals("over50000")) {
+                    priceConditions.add("EXISTS (SELECT 1 FROM variants v WHERE v.pid = products.id AND v.price > ?)");
+                    parameters.add(new BigDecimal("50000"));
+                }
+            }
+            if (!priceConditions.isEmpty()) {
+                conditions.add("(" + String.join(" OR ", priceConditions) + ")");
+            }
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", conditions));
+        }
+
+        // Add pagination
+        sql.append(" LIMIT ? OFFSET ?");
+        parameters.add(pageSize);
+        parameters.add(page * pageSize);
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < parameters.size(); i++) {
+                Object param = parameters.get(i);
+                if (param instanceof String) {
+                    ps.setString(i + 1, (String) param);
+                } else if (param instanceof BigDecimal) {
+                    ps.setBigDecimal(i + 1, (BigDecimal) param);
+                } else if (param instanceof Integer) {
+                    ps.setInt(i + 1, (Integer) param);
+                }
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                VariantDAO variantDAO = new VariantDAO();
+                while (rs.next()) {
+                    Product product = new Product();
+                    product.setId(rs.getInt("id"));
+                    product.setCode(rs.getString("code"));
+                    product.setName(rs.getString("name"));
+                    product.setDesc(rs.getString("desc"));
+                    product.setImg(rs.getString("img"));
+                    product.setTypeId(rs.getInt("typeId"));
+                    product.setVariantId(rs.getInt("variantId"));
+                    product.setCreateAt(rs.getDate("createAt"));
+                    // Set the lowest variant price
+                    Variant lowestVariant = variantDAO.getFirstVariantByProductId(product.getId());
+                    if (lowestVariant != null) {
+                        product.setPrice(lowestVariant.getPrice());
+                    }
+                    products.add(product);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return products;
+    }
+
+    public int getTotalProductCount(String query, String[] priceRanges, String[] typeIds) {
+        int count = 0;
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM products");
+        List<String> conditions = new ArrayList<>();
+        List<Object> parameters = new ArrayList<>();
+
+        if (query != null && !query.trim().isEmpty()) {
+            conditions.add("name LIKE ?");
+            parameters.add("%" + query + "%");
+        }
+
+        if (typeIds != null && typeIds.length > 0 && !Arrays.asList(typeIds).contains("all")) {
+            List<String> typeConditions = new ArrayList<>();
+            for (String typeId : typeIds) {
+                typeConditions.add("typeId = ?");
+                parameters.add(Integer.parseInt(typeId));
+            }
+            if (!typeConditions.isEmpty()) {
+                conditions.add("(" + String.join(" OR ", typeConditions) + ")");
+            }
         }
 
         if (priceRanges != null && priceRanges.length > 0 && !Arrays.asList(priceRanges).contains("all")) {
@@ -136,34 +241,21 @@ public class ProductDAO {
                     ps.setString(i + 1, (String) param);
                 } else if (param instanceof BigDecimal) {
                     ps.setBigDecimal(i + 1, (BigDecimal) param);
+                } else if (param instanceof Integer) {
+                    ps.setInt(i + 1, (Integer) param);
                 }
             }
 
             try (ResultSet rs = ps.executeQuery()) {
-                VariantDAO variantDAO = new VariantDAO();
-                while (rs.next()) {
-                    Product product = new Product();
-                    product.setId(rs.getInt("id"));
-                    product.setCode(rs.getString("code"));
-                    product.setName(rs.getString("name"));
-                    product.setDesc(rs.getString("desc"));
-                    product.setImg(rs.getString("img"));
-                    product.setTypeId(rs.getInt("typeId"));
-                    product.setVariantId(rs.getInt("variantId"));
-                    product.setCreateAt(rs.getDate("createAt"));
-                    // Set the lowest variant price
-                    Variant lowestVariant = variantDAO.getFirstVariantByProductId(product.getId());
-                    if (lowestVariant != null) {
-                        product.setPrice(lowestVariant.getPrice());
-                    }
-                    products.add(product);
+                if (rs.next()) {
+                    count = rs.getInt(1);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return products;
+        return count;
     }
 
 }

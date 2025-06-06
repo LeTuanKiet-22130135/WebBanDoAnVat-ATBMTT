@@ -204,4 +204,93 @@ public class OrderDAO {
 
         return shippingId;
     }
+
+    /**
+     * Updates the payment status for an order
+     * 
+     * @param orderId The ID of the order
+     * @param paymentStatus The payment status (0 = not yet, 1 = success, -1 = failed)
+     * @return true if the update was successful, false otherwise
+     */
+    public boolean updatePaymentStatus(int orderId, int paymentStatus) {
+        String query = "UPDATE shipping SET paymentStat = ? WHERE oId = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, paymentStatus);
+            stmt.setInt(2, orderId);
+            int rowsAffected = stmt.executeUpdate();
+
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Gets an order by its ID
+     * 
+     * @param orderId The ID of the order to retrieve
+     * @return The Order object if found, null otherwise
+     */
+    public Order getOrderById(int orderId) {
+        String query = "SELECT * FROM orders WHERE id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, orderId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Order order = new Order();
+                    order.setId(rs.getInt("id"));
+                    order.setUserId(rs.getInt("uId"));
+                    order.setOrderDate(rs.getDate("orderDate"));
+                    order.setTotal(rs.getBigDecimal("total"));
+
+                    // Get order details for this order
+                    order.setOrderDetails(getOrderDetailsByOrderId(order.getId()));
+
+                    return order;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets shipping information for an order
+     * 
+     * @param orderId The ID of the order
+     * @return The Shipping object if found, null otherwise
+     */
+    public Shipping getShippingByOrderId(int orderId) {
+        String query = "SELECT * FROM shipping WHERE oId = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, orderId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Shipping shipping = new Shipping();
+                    shipping.setId(rs.getInt("id"));
+                    shipping.setOrderId(rs.getInt("oId"));
+                    shipping.setStatus(rs.getInt("status"));
+                    shipping.setPaymentStatus(rs.getInt("paymentStat"));
+
+                    return shipping;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }

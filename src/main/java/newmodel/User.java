@@ -6,6 +6,7 @@ public class User {
     private String hashedPassword;
     private String email;
     private int status;
+    private String token; // OAuth token
 
     // Constructors
     public User() {
@@ -17,6 +18,16 @@ public class User {
         this.hashedPassword = hashedPassword;
         this.email = email;
         this.status = status;
+        this.token = null;
+    }
+
+    public User(int id, String username, String hashedPassword, String email, int status, String token) {
+        this.id = id;
+        this.username = username;
+        this.hashedPassword = hashedPassword;
+        this.email = email;
+        this.status = status;
+        this.token = token;
     }
 
     // Getters and Setters
@@ -60,10 +71,12 @@ public class User {
         this.status = status;
     }
 
-    // Convenience method to check if user is admin (for backward compatibility)
-    public boolean isAdmin() {
-        // Assuming status value 1 represents admin
-        return status == 1;
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     @Override

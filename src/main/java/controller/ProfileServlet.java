@@ -4,6 +4,7 @@ import newdao.UserDAO;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import newmodel.User;
 import newmodel.UserProfile;
 
 import java.io.IOException;
@@ -25,8 +26,12 @@ public class ProfileServlet extends HttpServlet {
         UserProfile profile = userDAO.getUserProfileByUserId(userId);
         System.out.println(profile.toString());
 
-        // Set profile attribute and forward to JSP
+        // Fetch user object to check if user is logged in through Google
+        User user = userDAO.getUserByUsername(username);
+
+        // Set profile and user attributes and forward to JSP
         request.setAttribute("profile", profile);
+        request.setAttribute("user", user);
         request.getRequestDispatcher("profile.jsp").forward(request, response);
     }
 
