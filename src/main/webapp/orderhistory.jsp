@@ -45,13 +45,16 @@
 							<tbody>
 								<c:forEach var="order" items="${orders}">
 									<tr>
-										<td>${order.id}</td>
+ 									<td>${order.id}</td>
 										<td>${order.orderDate}</td>
 										<td><fmt:formatNumber value="${order.total}" pattern="#,##0.## ₫"/></td>
 										<td>
 											<button type="button" class="btn btn-info"
 												data-toggle="collapse" data-target="#details${order.id}">
 												<fmt:message key="button.viewDetails" /></button>
+											<a href="invoicehash?orderId=${order.id}" class="btn btn-success ml-2">
+												<i class="fas fa-download"></i> Get Hash
+											</a>
 										</td>
 									</tr>
 									<!-- Order Details -->
