@@ -1,6 +1,7 @@
 package newdao;
 
 import org.apache.commons.dbcp2.BasicDataSource;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 
@@ -30,7 +31,7 @@ public class DBConnection {
             Class.forName("com.mysql.cj.jdbc.Driver");
             return dataSource.getConnection(); // Get a connection from the pool
         } catch (Exception e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(DBConnection.class).error("Failed to get database connection", e);
         }
         return null;
     }

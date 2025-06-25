@@ -2,6 +2,7 @@ package newmodel;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,6 +17,7 @@ public class Cart {
 
     // Constructors
     public Cart() {
+        this.items = new ArrayList<>();
     }
 
     public Cart(int id, int userId, Timestamp createdAt, Timestamp updatedAt) {

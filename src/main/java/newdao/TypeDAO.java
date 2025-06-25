@@ -1,74 +1,44 @@
 package newdao;
 
 import newmodel.Type;
+import repository.product.TypeRepository;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
-/**
- * DAO class for handling database operations related to product types.
- */
 public class TypeDAO {
+    private final TypeRepository typeRepo;
 
     public TypeDAO() {
-        Connection conn = DBConnection.getConnection();
+        Jdbi jdbi = JdbiConfig.getJdbi();
+        this.typeRepo = jdbi.onDemand(TypeRepository.class);
     }
 
-    /**
-     * Get all product types from the database.
-     * 
-     * @return List of all product types
-     */
+    // Row Mapper
+    public static class TypeMapper implements RowMapper<Type> {
+        @Override
+        public Type map(ResultSet rs, StatementContext ctx) throws SQLException {
+            Type type = new Type();
+            type.setId(rs.getInt("id"));
+            type.setName(rs.getString("name"));
+            return type;
+        }
+    }
+
+    // Refactored DAO methods
     public List<Type> getAllTypes() {
-        List<Type> types = new ArrayList<>();
-        String sql = "SELECT * FROM types";
-
-        try (Connection conn = DBConnection.getConnection()) {
-            assert conn != null;
-            try (PreparedStatement ps = conn.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-
-                while (rs.next()) {
-                    Type type = new Type();
-                    type.setId(rs.getInt("id"));
-                    type.setName(rs.getString("name"));
-                    types.add(type);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return types;
+        return typeRepo.getAllTypes();
     }
 
-    /**
-     * Get a product type by its ID.
-     * 
-     * @param id The ID of the product type
-     * @return The product type with the specified ID, or null if not found
-     */
     public Type getTypeById(int id) {
-        String sql = "SELECT * FROM types WHERE id = ?";
-        Type type = null;
-
-        try (Connection conn = DBConnection.getConnection()) {
-            assert conn != null;
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, id);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        type = new Type();
-                        type.setId(rs.getInt("id"));
-                        type.setName(rs.getString("name"));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return type;
+        return typeRepo.getTypeById(id).orElse(null);
     }
 }
