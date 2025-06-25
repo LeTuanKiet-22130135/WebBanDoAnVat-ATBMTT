@@ -1,64 +1,42 @@
 package newdao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import newmodel.Variant;
+import repository.product.VariantRepository;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
+
 import java.sql.ResultSet;
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.List;
 
-import newdao.DBConnection;
-import newmodel.Variant;
-
 public class VariantDAO {
+    private final VariantRepository variantRepo;
 
-    public Variant getFirstVariantByProductId(int productId) {
-        String sql = "SELECT * FROM variants WHERE pid = ? ORDER BY id ASC LIMIT 1";
+    public VariantDAO() {
+        Jdbi jdbi = JdbiConfig.getJdbi();
+        this.variantRepo = jdbi.onDemand(VariantRepository.class);
+    }
 
-        try (Connection conn = DBConnection.getConnection()) {
-            assert conn != null;
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-
-                ps.setInt(1, productId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        Variant variant = new Variant();
-                        variant.setId(rs.getInt("id"));
-                        variant.setPid(rs.getInt("pid"));
-                        variant.setName(rs.getString("name"));
-                        variant.setPrice(rs.getBigDecimal("price"));
-                        return variant;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    // Row Mapper
+    public static class VariantMapper implements RowMapper<Variant> {
+        @Override
+        public Variant map(ResultSet rs, StatementContext ctx) throws SQLException {
+            Variant variant = new Variant();
+            variant.setId(rs.getInt("id"));
+            variant.setPid(rs.getInt("pid"));
+            variant.setName(rs.getString("name"));
+            variant.setPrice(rs.getBigDecimal("price"));
+            return variant;
         }
+    }
 
-        return null;
+    // Refactored DAO methods
+    public Variant getFirstVariantByProductId(int productId) {
+        return variantRepo.getFirstVariantByProductId(productId).orElse(null);
     }
 
     public List<Variant> getVariantsByProductId(int productId) {
-        List<Variant> variants = new ArrayList<>();
-        String sql = "SELECT * FROM variants WHERE pid = ? ORDER BY id ASC";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, productId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Variant variant = new Variant();
-                    variant.setId(rs.getInt("id"));
-                    variant.setPid(rs.getInt("pid"));
-                    variant.setName(rs.getString("name"));
-                    variant.setPrice(rs.getBigDecimal("price"));
-                    variants.add(variant);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return variants;
+        return variantRepo.getVariantsByProductId(productId);
     }
-
 }
