@@ -14,6 +14,9 @@
                     <a href="profile" class="list-group-item list-group-item-action active">
                         <fmt:message key="footer.profile" />
                     </a>
+                    <a href="pubkey" class="list-group-item list-group-item-action">
+                        Public Key Management
+                    </a>
                     <a href="orderhistory" class="list-group-item list-group-item-action">
                         <fmt:message key="footer.orderHistory" />
                     </a>

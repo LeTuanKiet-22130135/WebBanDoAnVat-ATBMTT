@@ -99,6 +99,28 @@ public class VnPayUtil {
     }
 
     /**
+     * Generate SHA-1 hash
+     * 
+     * @param message The message to hash
+     * @return The SHA-1 hash
+     */
+    public static String sha1(String message) {
+        String digest = null;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] hash = md.digest(message.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(2 * hash.length);
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+            digest = sb.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            digest = "";
+        }
+        return digest;
+    }
+
+    /**
      * Generate HMAC-SHA512 hash for all fields
      * 
      * @param fields Map of fields to hash

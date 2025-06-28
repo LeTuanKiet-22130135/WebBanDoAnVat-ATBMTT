@@ -66,6 +66,24 @@ public class CheckoutServlet extends HttpServlet {
         // Get the selected payment method
         String paymentMethod = req.getParameter("payment");
 
+        // Check if this is a verified request from the signature verification process
+        String verified = req.getParameter("verified");
+        Boolean signatureVerified = (Boolean) session.getAttribute("signatureVerified");
+
+        if (verified == null || !"true".equals(verified) || signatureVerified == null || !signatureVerified) {
+            // First time submission - store payment method and redirect to validation page
+            session.setAttribute("paymentMethod", paymentMethod);
+            req.getRequestDispatcher("ordervalidation.jsp").forward(req, resp);
+            return;
+        }
+
+        // If we get here, the signature has been verified
+        // Clear the verification flag to prevent reuse
+        session.removeAttribute("signatureVerified");
+
+        // Get the payment method from session (set during validation)
+        paymentMethod = (String) session.getAttribute("paymentMethod");
+
         if ("vnpay".equals(paymentMethod)) {
             // For VnPay payments, store order information in session for later use
             // after payment is successful

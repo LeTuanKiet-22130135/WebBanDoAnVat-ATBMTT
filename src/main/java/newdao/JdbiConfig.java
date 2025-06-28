@@ -1,6 +1,6 @@
 package newdao;
 
-import org.apache.commons.dbcp2.BasicDataSource;
+import newmodel.Pubkey;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.core.statement.SqlLogger;
@@ -50,6 +50,8 @@ public class JdbiConfig {
                             context.getElapsedTime(ChronoUnit.MILLIS)));
 
             jdbi.registerRowMapper(ConstructorMapper.factory(CartDAO.CartItemInfo.class));
+            // Register custom row mapper for Pubkey
+            jdbi.registerRowMapper(newmodel.Pubkey.class, new PubkeyDAO.PubkeyMapper());
                 }
             });
         }
