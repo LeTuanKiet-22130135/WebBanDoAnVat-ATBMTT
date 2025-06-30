@@ -15,7 +15,7 @@ public interface UserRepository {
     @SqlQuery("SELECT id FROM users WHERE username = :username")
     Optional<Integer> findUserIdByUsername(@Bind("username") String username);
 
-    @SqlQuery("SELECT id, username, email, status FROM users")
+    @SqlQuery("SELECT id, username, email, hashed_password, status, token FROM users")
     @RegisterRowMapper(UserDAO.UserMapper.class)
     List<User> getAllUsers();
 

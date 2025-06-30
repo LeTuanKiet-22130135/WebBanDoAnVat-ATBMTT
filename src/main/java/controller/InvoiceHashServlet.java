@@ -17,6 +17,7 @@ import newmodel.Cart;
 import newmodel.CartItem;
 import newmodel.Order;
 import util.VnPayUtil;
+import util.SignatureUtil;
 
 /**
  * Servlet for generating and downloading SHA-1 hash of order details
@@ -40,17 +41,12 @@ public class InvoiceHashServlet extends HttpServlet {
             return;
         }
 
-        // Get order ID from request
-        String orderIdParam = request.getParameter("orderId");
+        // Get order ID from session
+        Integer pendingOrderId = (Integer) session.getAttribute("pendingOrderId");
+        String orderIdParam = pendingOrderId != null ? pendingOrderId.toString() : "";
 
-        // Check if we're dealing with a pending order or an existing order
-        if (orderIdParam == null || orderIdParam.isEmpty()) {
-            // No order ID means we're dealing with a pending order (cart items)
-            handlePendingOrder(request, response, session, username);
-        } else {
-            // We have an order ID, so we're dealing with an existing order
-            handleExistingOrder(request, response, session, username, orderIdParam);
-        }
+        // Always use existing order handler
+        handleExistingOrder(request, response, session, username, orderIdParam);
     }
 
     /**
@@ -80,7 +76,7 @@ public class InvoiceHashServlet extends HttpServlet {
         }
 
         // Generate order information string to hash
-        String orderInfo = generateCartInfoString(cart, username, paymentMethod, shippingCost);
+        String orderInfo = SignatureUtil.generateOrderInfoString(orderDAO.getOrderById(Integer.parseInt(session.getAttribute("pendingOrderId").toString())));
 
         // Generate SHA-1 hash
         String hash = VnPayUtil.sha1(orderInfo);
@@ -120,7 +116,7 @@ public class InvoiceHashServlet extends HttpServlet {
             }
 
             // Generate order information string to hash
-            String orderInfo = generateOrderInfoString(order);
+            String orderInfo = SignatureUtil.generateOrderInfoString(order);
 
             // Generate SHA-1 hash (changed from SHA-256)
             String hash = VnPayUtil.sha1(orderInfo);
@@ -139,67 +135,4 @@ public class InvoiceHashServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Generates a string representation of the order for hashing
-     * 
-     * @param order The order to generate string for
-     * @return A string containing order details
-     */
-    private String generateOrderInfoString(Order order) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("OrderID:").append(order.getId()).append(";");
-        sb.append("UserID:").append(order.getUserId()).append(";");
-        sb.append("OrderDate:").append(order.getOrderDate()).append(";");
-        sb.append("Total:").append(order.getTotal()).append(";");
-
-        // Add order details
-        if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty()) {
-            sb.append("OrderDetails:[");
-            order.getOrderDetails().forEach(detail -> {
-                sb.append("{");
-                sb.append("ProductName:").append(detail.getProductName()).append(",");
-                sb.append("VariantName:").append(detail.getVariantName()).append(",");
-                sb.append("Quantity:").append(detail.getQuantity()).append(",");
-                sb.append("Price:").append(detail.getPrice());
-                sb.append("}");
-            });
-            sb.append("]");
-        }
-
-        return sb.toString();
-    }
-
-    /**
-     * Generates a string representation of the cart for hashing
-     * 
-     * @param cart The cart to generate string for
-     * @param username The username of the cart owner
-     * @param paymentMethod The selected payment method
-     * @param shippingCost The shipping cost
-     * @return A string containing cart details
-     */
-    private String generateCartInfoString(Cart cart, String username, String paymentMethod, BigDecimal shippingCost) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Username:").append(username).append(";");
-        sb.append("PaymentMethod:").append(paymentMethod).append(";");
-        sb.append("Subtotal:").append(cart.getSubtotal()).append(";");
-        sb.append("ShippingCost:").append(shippingCost).append(";");
-        sb.append("Total:").append(cart.getSubtotal().add(shippingCost)).append(";");
-
-        // Add cart items
-        if (cart.getItems() != null && !cart.getItems().isEmpty()) {
-            sb.append("CartItems:[");
-            cart.getItems().forEach(item -> {
-                sb.append("{");
-                sb.append("ProductName:").append(item.getProductName()).append(",");
-                sb.append("VariantId:").append(item.getVariantId()).append(",");
-                sb.append("Quantity:").append(item.getQuantity()).append(",");
-                sb.append("Price:").append(item.getPrice());
-                sb.append("}");
-            });
-            sb.append("]");
-        }
-
-        return sb.toString();
-    }
 }

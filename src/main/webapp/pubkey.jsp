@@ -67,19 +67,14 @@
 
                                     <!-- Actions -->
                                     <div class="mt-3">
-                                        <form action="pubkey" method="post" class="d-inline">
-                                            <input type="hidden" name="action" value="toggle">
-                                            <button type="submit" class="btn btn-sm btn-warning">
-                                                <c:choose>
-                                                    <c:when test="${pubkey.available}">Disable Key</c:when>
-                                                    <c:otherwise>Enable Key</c:otherwise>
-                                                </c:choose>
-                                            </button>
-                                        </form>
-                                        <form action="pubkey" method="post" class="d-inline ml-2">
-                                            <input type="hidden" name="action" value="delete">
-                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete your public key?')">Delete Key</button>
-                                        </form>
+                                        <c:if test="${pubkey.available}">
+                                            <form action="pubkey" method="post" class="d-inline">
+                                                <input type="hidden" name="action" value="lost">
+                                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Are you sure you want to mark this key as lost? You will need to upload a new key.')">
+                                                    Lost this key
+                                                </button>
+                                            </form>
+                                        </c:if>
                                     </div>
                                 </div>
                             </div>
@@ -93,44 +88,23 @@
                 </div>
 
                 <!-- Upload Public Key Form -->
-                <div>
-                    <h6 class="mb-3">Upload Public Key</h6>
-                    <form action="pubkey" method="post" enctype="multipart/form-data">
-                        <input type="hidden" name="action" value="upload">
-                        <div class="form-group">
-                            <label for="pubkeyFile">Select .pub file (RSA 1024-bit)</label>
-                            <input type="file" class="form-control-file" id="pubkeyFile" name="pubkeyFile" required>
-                            <small class="form-text text-muted">
-                                Upload a .pub file containing your RSA public key (1024 bits).
-                            </small>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Upload Key</button>
-                    </form>
-                </div>
-
-                <!-- Change Password Section -->
-                <c:if test="${user.hashedPassword != null}">
-                    <div class="mt-5">
-                        <h5 class="section-title position-relative text-uppercase mb-3">
-                            <span class="bg-secondary pr-3"><fmt:message key="footer.changePassword" /></span>
-                        </h5>
-                        <form action="changepassword" method="post" onsubmit="return validateForm()">
+                <c:if test="${pubkey == null || !pubkey.available}">
+                    <div>
+                        <h6 class="mb-3">Upload Public Key</h6>
+                        <form action="pubkey" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="action" value="upload">
                             <div class="form-group">
-                                <label><fmt:message key="changepassword.currentPassword" /></label>
-                                <input class="form-control" type="password" name="currentPassword" required>
+                                <label for="pubkeyFile">Select .pub file (RSA 1024-bit)</label>
+                                <input type="file" class="form-control-file" id="pubkeyFile" name="pubkeyFile" required>
+                                <small class="form-text text-muted">
+                                    Upload a .pub file containing your RSA public key (1024 bits).
+                                </small>
                             </div>
-                            <div class="form-group">
-                                <label><fmt:message key="changepassword.newPassword" /></label>
-                                <input class="form-control" type="password" name="newPassword" required>
-                            </div>
-                            <div class="form-group">
-                                <label><fmt:message key="changepassword.repeatNewPassword" /></label>
-                                <input class="form-control" type="password" name="repeatNewPassword" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary mt-3"><fmt:message key="button.changePassword" /></button>
+                            <button type="submit" class="btn btn-primary">Upload Key</button>
                         </form>
                     </div>
                 </c:if>
+
 
                 <!-- Information about public keys -->
                 <div class="mt-4">

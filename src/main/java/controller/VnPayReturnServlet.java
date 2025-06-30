@@ -72,17 +72,32 @@ public class VnPayReturnServlet extends HttpServlet {
                     newdao.CartDAO cartDAO = new newdao.CartDAO();
 
                     // Get pending order information from session
+                    Integer pendingOrderId = (Integer) session.getAttribute("pendingOrderId");
                     Integer pendingUserId = (Integer) session.getAttribute("pendingUserId");
                     @SuppressWarnings("unchecked")
                     List<newmodel.CartItem> pendingCartItems = (List<newmodel.CartItem>) session.getAttribute("pendingCartItems");
                     BigDecimal pendingTotalAmount = (BigDecimal) session.getAttribute("pendingTotalAmount");
                     newmodel.Cart cart = (newmodel.Cart) session.getAttribute("cart");
 
-                    if (pendingUserId != null && pendingCartItems != null && pendingTotalAmount != null) {
-                        // Create the order now that payment is successful
-                        int orderId = orderDAO.createOrder(pendingUserId.intValue(), pendingTotalAmount, pendingCartItems);
+                    // Check if we have a pending order ID (new flow) or pending user ID (old flow)
+                    int orderId = -1;
+                    if (pendingOrderId != null) {
+                        // Use the existing order
+                        orderId = pendingOrderId;
+
+                        // Update the payment type in the database
+                        orderDAO.updateOrderPayment(orderId, "vnpay");
+                    } else if (pendingUserId != null && pendingCartItems != null && pendingTotalAmount != null) {
+                        // Create the order now that payment is successful (old flow)
+                        orderId = orderDAO.createOrder(pendingUserId.intValue(), pendingTotalAmount, pendingCartItems);
 
                         if (orderId > 0) {
+                            // Set the order as verified
+                            orderDAO.updateOrderVerification(orderId, true);
+
+                            // Store the payment type
+                            orderDAO.updateOrderPayment(orderId, "vnpay");
+
                             // Add shipping information with payment status = 1 (paid)
                             int shippingId = orderDAO.addShipping(orderId, 0, 1); // 0 = placed, 1 = paid
 

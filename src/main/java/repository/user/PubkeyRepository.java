@@ -15,16 +15,14 @@ import java.util.Optional;
  * This interface defines SQL operations for the 'pubkey' table.
  */
 public interface PubkeyRepository {
-    @SqlQuery("SELECT * FROM pubkey WHERE user_id = :userId")
+    @SqlQuery("SELECT * FROM pubkey WHERE user_id = :userId ORDER BY id DESC LIMIT 1")
     Optional<Pubkey> getPubkeyByUserId(@Bind("userId") int userId);
 
     @SqlUpdate("INSERT INTO pubkey (user_id, pubkey, avalible) VALUES (:userId, :pubkey, :available)")
     @GetGeneratedKeys("id")
     int createPubkey(@BindBean Pubkey pubkey);
 
-    @SqlUpdate("UPDATE pubkey SET pubkey = :pubkey, avalible = :available WHERE user_id = :userId")
+    @SqlUpdate("UPDATE pubkey SET avalible = :available WHERE id = :id")
     boolean updatePubkey(@BindBean Pubkey pubkey);
 
-    @SqlUpdate("DELETE FROM pubkey WHERE user_id = :userId")
-    boolean deletePubkey(@Bind("userId") int userId);
 }

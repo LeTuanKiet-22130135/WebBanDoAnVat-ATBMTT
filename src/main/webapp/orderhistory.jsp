@@ -35,35 +35,61 @@
 					<span class="bg-secondary pr-3"><fmt:message key="footer.orderHistory" /></span>
 				</h5>
 
+				<!-- Display success or error messages -->
+				<c:if test="${not empty successMessage}">
+					<div class="alert alert-success" role="alert">
+						${successMessage}
+					</div>
+				</c:if>
+				<c:if test="${not empty errorMessage}">
+					<div class="alert alert-danger" role="alert">
+						${errorMessage}
+					</div>
+				</c:if>
+
 				<c:if test="${not empty orders}">
 					<div class="table-responsive">
 						<table class="table table-bordered">
 							<thead>
 								<tr>
-									<th><fmt:message key="admin.id" /></th>
 									<th><fmt:message key="orderhistory.orderDate" /></th>
 									<th><fmt:message key="orderhistory.totalAmount" /></th>
+									<th>Verified</th>
 									<th><fmt:message key="orderhistory.details" /></th>
+									<th>Integrity Check</th>
 								</tr>
 							</thead>
 							<tbody>
 								<c:forEach var="order" items="${orders}">
 									<tr>
- 									<td>${order.id}</td>
 										<td>${order.orderDate}</td>
 										<td><fmt:formatNumber value="${order.total}" pattern="#,##0.## ₫"/></td>
+										<td>
+											<c:choose>
+												<c:when test="${order.verify}">
+													<span class="badge badge-success">Yes</span>
+												</c:when>
+												<c:otherwise>
+													<span class="badge badge-secondary">No</span>
+												</c:otherwise>
+											</c:choose>
+										</td>
 										<td>
 											<button type="button" class="btn btn-info"
 												data-toggle="collapse" data-target="#details${order.id}">
 												<fmt:message key="button.viewDetails" /></button>
-											<a href="invoicehash?orderId=${order.id}" class="btn btn-success ml-2">
-												<i class="fas fa-download"></i> Get Hash
-											</a>
+										</td>
+										<td>
+											<c:if test="${order.verify && order.signature != null}">
+												<a href="checkintegrity?orderId=${order.id}" class="btn btn-warning">
+													Check Integrity
+												</a>
+											</c:if>
 										</td>
 									</tr>
 									<!-- Order Details -->
 									<tr id="details${order.id}" class="collapse">
-										<td colspan="4">
+										<td colspan="5">
 											<table class="table table-striped">
 												<thead>
 													<tr>

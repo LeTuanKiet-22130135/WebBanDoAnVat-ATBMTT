@@ -48,9 +48,6 @@ public class PubkeyDAO {
         return pubkeyRepo.updatePubkey(pubkey);
     }
 
-    public boolean deletePubkey(int userId) {
-        return pubkeyRepo.deletePubkey(userId);
-    }
 
     // Helper method to create a new pubkey for a user
     public Pubkey createNewPubkey(int userId, byte[] pubkeyData) {
@@ -58,10 +55,10 @@ public class PubkeyDAO {
         pubkey.setUserId(userId);
         pubkey.setPubkey(pubkeyData);
         pubkey.setAvailable(true);
-        
+
         int id = pubkeyRepo.createPubkey(pubkey);
         pubkey.setId(id);
-        
+
         return pubkey;
     }
 }

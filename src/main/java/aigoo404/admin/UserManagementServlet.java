@@ -4,15 +4,15 @@ import com.google.gson.Gson;
 import newmodel.User;
 import newdao.UserDAO;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet("/userManagement")
+@WebServlet("/admin/userManagement")
 public class UserManagementServlet extends HttpServlet {
 
     private final UserDAO userDAO = new UserDAO();
@@ -30,5 +30,8 @@ public class UserManagementServlet extends HttpServlet {
         // Convert the list of users to JSON
         Gson gson = new Gson();
         String json = gson.toJson(users);
+
+        // Write the JSON to the response
+        response.getWriter().write(json);
     }
 }

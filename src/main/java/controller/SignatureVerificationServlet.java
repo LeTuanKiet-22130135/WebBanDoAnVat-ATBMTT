@@ -2,15 +2,6 @@ package controller;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 import java.util.List;
 
 import jakarta.servlet.ServletException;
@@ -32,6 +23,7 @@ import newmodel.Order;
 import newmodel.Pubkey;
 import newmodel.Shipping;
 import util.GHNOrderService;
+import util.SignatureUtil;
 import util.VnPayUtil;
 
 /**
@@ -80,7 +72,30 @@ public class SignatureVerificationServlet extends HttpServlet {
             }
         }
 
-        // Get cart from session
+        // Get pending order ID from session
+        Integer pendingOrderId = (Integer) session.getAttribute("pendingOrderId");
+        if (pendingOrderId == null) {
+            request.setAttribute("errorMessage", "No pending order found. Please try again.");
+            request.getRequestDispatcher("ordervalidation.jsp").forward(request, response);
+            return;
+        }
+
+        // Get the order
+        Order pendingOrder = orderDAO.getOrderById(pendingOrderId);
+        if (pendingOrder == null) {
+            request.setAttribute("errorMessage", "Order not found. Please try again.");
+            request.getRequestDispatcher("ordervalidation.jsp").forward(request, response);
+            return;
+        }
+
+        // Verify that the order belongs to the logged-in user
+        if (pendingOrder.getUserId() != userId) {
+            request.setAttribute("errorMessage", "Access denied. This order does not belong to you.");
+            request.getRequestDispatcher("ordervalidation.jsp").forward(request, response);
+            return;
+        }
+
+        // Get cart from session (still needed for some operations)
         Cart cart = (Cart) session.getAttribute("cart");
         if (cart == null || cart.getItems().isEmpty()) {
             request.setAttribute("errorMessage", "Your cart is empty.");
@@ -106,18 +121,33 @@ public class SignatureVerificationServlet extends HttpServlet {
             // Read signature bytes
             byte[] signatureBytes = filePart.getInputStream().readAllBytes();
 
+            // Update the order with payment method
+            orderDAO.updateOrderPayment(pendingOrderId, paymentMethod);
+
+            // Reload the order to get the updated payment method
+            pendingOrder = orderDAO.getOrderById(pendingOrderId);
+
             // Generate order information string to hash
-            String orderInfo = generateCartInfoString(cart, username, paymentMethod, shippingCost);
+            String orderInfo = SignatureUtil.generateOrderInfoString(pendingOrder);
 
             // Generate SHA-1 hash
             String hash = VnPayUtil.sha1(orderInfo);
 
             // Verify signature
-            boolean verified = verifySignature(hash.getBytes(), signatureBytes, pubkey.getPubkey());
+            boolean verified = SignatureUtil.verifySignature(hash.getBytes(), signatureBytes, pubkey.getPubkey());
 
             if (verified) {
+                // Set the order as verified
+                orderDAO.updateOrderVerification(pendingOrderId, true);
+
+                // Store the signature data
+                orderDAO.updateOrderSignature(pendingOrderId, signatureBytes);
+
                 // Store payment method in session
                 session.setAttribute("paymentMethod", paymentMethod);
+
+                // Set verification flag in session
+                session.setAttribute("signatureVerified", true);
 
                 // Get cart items and total amount
                 List<CartItem> cartItems = cart.getItems();
@@ -125,10 +155,8 @@ public class SignatureVerificationServlet extends HttpServlet {
 
                 // Process payment based on payment method
                 if ("vnpay".equals(paymentMethod)) {
-                    // For VnPay payments, store order information in session for later use
-                    session.setAttribute("pendingUserId", userId);
-                    session.setAttribute("pendingCartItems", cartItems);
-                    session.setAttribute("pendingTotalAmount", totalAmount);
+                    // For VnPay payments, store order ID in session for later use
+                    session.setAttribute("pendingOrderId", pendingOrderId);
 
                     // Generate a temporary reference for the transaction
                     String tempOrderRef = "TEMP_" + System.currentTimeMillis();
@@ -136,12 +164,14 @@ public class SignatureVerificationServlet extends HttpServlet {
 
                     // Redirect directly to VnPay payment servlet
                     response.sendRedirect(request.getContextPath() + "/vnpay-payment?orderRef=" + tempOrderRef + 
-                                         "&amount=" + totalAmount.multiply(new BigDecimal(100)).intValue());
+                                         "&amount=" + pendingOrder.getTotal().multiply(new BigDecimal(100)).intValue());
                 } else if ("cod".equals(paymentMethod)) {
-                    // For COD payment, create the order immediately
-                    int orderId = orderDAO.createOrder(userId, totalAmount, cartItems);
+                    // For COD payment, use the existing order
+                    int orderId = pendingOrderId;
 
                     if (orderId > 0) {
+                        // Order is already verified and signature is already stored
+
                         // Add shipping information
                         int shippingId = orderDAO.addShipping(orderId, 0, 1); // 0 = placed, 1 = paid (for direct check)
 
@@ -258,66 +288,4 @@ public class SignatureVerificationServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Verify a digital signature
-     * 
-     * @param data The original data that was signed (hash)
-     * @param signature The signature to verify
-     * @param publicKeyBytes The public key bytes
-     * @return true if the signature is valid, false otherwise
-     */
-    private boolean verifySignature(byte[] data, byte[] signature, byte[] publicKeyBytes) {
-        try {
-            // Create a key factory and public key spec
-            java.security.KeyFactory keyFactory = java.security.KeyFactory.getInstance("RSA");
-            java.security.spec.X509EncodedKeySpec keySpec = new java.security.spec.X509EncodedKeySpec(publicKeyBytes);
-            PublicKey publicKey = keyFactory.generatePublic(keySpec);
-
-            // Create a signature instance and initialize with the public key
-            Signature sig = Signature.getInstance("SHA1withRSA");
-            System.out.println(publicKey.getAlgorithm() + " " + publicKey.getFormat() + " " + publicKey.getEncoded().length + " " + Base64.getEncoder().encodeToString(publicKey.getEncoded()) );
-            sig.initVerify(publicKey);
-
-            // Update with the data and verify the signature
-            sig.update(data);
-            return sig.verify(signature);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Generates a string representation of the cart for hashing
-     * 
-     * @param cart The cart to generate string for
-     * @param username The username of the cart owner
-     * @param paymentMethod The selected payment method
-     * @param shippingCost The shipping cost
-     * @return A string containing cart details
-     */
-    private String generateCartInfoString(Cart cart, String username, String paymentMethod, BigDecimal shippingCost) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Username:").append(username).append(";");
-        sb.append("PaymentMethod:").append(paymentMethod).append(";");
-        sb.append("Subtotal:").append(cart.getSubtotal()).append(";");
-        sb.append("ShippingCost:").append(shippingCost).append(";");
-        sb.append("Total:").append(cart.getSubtotal().add(shippingCost)).append(";");
-
-        // Add cart items
-        if (cart.getItems() != null && !cart.getItems().isEmpty()) {
-            sb.append("CartItems:[");
-            cart.getItems().forEach(item -> {
-                sb.append("{");
-                sb.append("ProductName:").append(item.getProductName()).append(",");
-                sb.append("VariantId:").append(item.getVariantId()).append(",");
-                sb.append("Quantity:").append(item.getQuantity()).append(",");
-                sb.append("Price:").append(item.getPrice());
-                sb.append("}");
-            });
-            sb.append("]");
-        }
-
-        return sb.toString();
-    }
 }

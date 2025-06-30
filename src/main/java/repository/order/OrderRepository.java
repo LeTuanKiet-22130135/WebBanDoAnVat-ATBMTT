@@ -27,4 +27,13 @@ public interface OrderRepository {
     @SqlQuery("SELECT * FROM orders WHERE id = :orderId")
     @RegisterRowMapper(OrderDAO.OrderMapper.class)
     Optional<Order> getOrderById(@Bind("orderId") int orderId);
+
+    @SqlUpdate("UPDATE orders SET verify = :verify WHERE id = :orderId")
+    boolean updateOrderVerification(@Bind("orderId") int orderId, @Bind("verify") boolean verify);
+
+    @SqlUpdate("UPDATE orders SET signature = :signature WHERE id = :orderId")
+    boolean updateOrderSignature(@Bind("orderId") int orderId, @Bind("signature") byte[] signature);
+
+    @SqlUpdate("UPDATE orders SET payment = :payment WHERE id = :orderId")
+    boolean updateOrderPayment(@Bind("orderId") int orderId, @Bind("payment") String payment);
 }

@@ -70,10 +70,24 @@ public class CheckoutServlet extends HttpServlet {
         String verified = req.getParameter("verified");
         Boolean signatureVerified = (Boolean) session.getAttribute("signatureVerified");
 
-        if (verified == null || !"true".equals(verified) || signatureVerified == null || !signatureVerified) {
-            // First time submission - store payment method and redirect to validation page
-            session.setAttribute("paymentMethod", paymentMethod);
-            req.getRequestDispatcher("ordervalidation.jsp").forward(req, resp);
+        if (!"true".equals(verified) || signatureVerified == null || !signatureVerified) {
+            // First time submission - create order with verify=false
+            int orderId = orderDAO.createOrder(userId, totalAmount, cartItems);
+
+            // Update the payment type in the database
+            orderDAO.updateOrderPayment(orderId, paymentMethod);
+
+            if (orderId > 0) {
+                // Store order ID and payment method in session
+                session.setAttribute("pendingOrderId", orderId);
+                session.setAttribute("paymentMethod", paymentMethod);
+
+                // Redirect to validation page
+                req.getRequestDispatcher("ordervalidation.jsp").forward(req, resp);
+            } else {
+                req.setAttribute("errorMessage", "Failed to create order. Please try again.");
+                req.getRequestDispatcher("checkout.jsp").forward(req, resp);
+            }
             return;
         }
 
@@ -100,6 +114,9 @@ public class CheckoutServlet extends HttpServlet {
         } else if ("cod".equals(paymentMethod)) {
             // For COD payment, create the order immediately
             int orderId = orderDAO.createOrder(userId, totalAmount, cartItems);
+
+            // Update the payment type in the database
+            orderDAO.updateOrderPayment(orderId, paymentMethod);
 
             if (orderId > 0) {
                 // Add shipping information

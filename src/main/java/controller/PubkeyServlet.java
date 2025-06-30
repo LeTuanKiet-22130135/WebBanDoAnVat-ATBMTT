@@ -75,6 +75,14 @@ public class PubkeyServlet extends HttpServlet {
         String action = request.getParameter("action");
 
         if ("upload".equals(action)) {
+            // Check if user already has an available key
+            Pubkey existingPubkey = pubkeyDAO.getPubkeyByUserId(userId);
+            if (existingPubkey != null && existingPubkey.isAvailable()) {
+                request.setAttribute("error", "You already have an active public key. Please mark it as lost before uploading a new one.");
+                doGet(request, response);
+                return;
+            }
+
             // Handle public key upload
             Part filePart = request.getPart("pubkeyFile");
 
@@ -95,45 +103,36 @@ public class PubkeyServlet extends HttpServlet {
                     return;
                 }
 
-                // Check if user already has a public key
-                if (pubkeyDAO.hasPubkey(userId)) {
-                    // Update existing public key
-                    Pubkey pubkey = pubkeyDAO.getPubkeyByUserId(userId);
-                    pubkey.setPubkey(pubkeyBytes);
-                    pubkey.setAvailable(true);
-                    pubkeyDAO.updatePubkey(pubkey);
-                } else {
-                    // Create new public key
-                    pubkeyDAO.createNewPubkey(userId, pubkeyBytes);
+                // Check if this key was previously used and marked as unavailable
+                if (existingPubkey != null && !existingPubkey.isAvailable() && 
+                    java.util.Arrays.equals(existingPubkey.getPubkey(), pubkeyBytes)) {
+                    request.setAttribute("error", "This key has been marked as lost. Please generate a new key pair.");
+                    doGet(request, response);
+                    return;
                 }
+
+                // Always create a new public key row instead of updating existing one
+                pubkeyDAO.createNewPubkey(userId, pubkeyBytes);
 
                 request.setAttribute("success", "Public key uploaded successfully");
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Error uploading public key", e);
                 request.setAttribute("error", "Error uploading public key: " + e.getMessage());
             }
-        } else if ("delete".equals(action)) {
-            // Handle public key deletion
-            try {
-                pubkeyDAO.deletePubkey(userId);
-                request.setAttribute("success", "Public key deleted successfully");
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error deleting public key", e);
-                request.setAttribute("error", "Error deleting public key: " + e.getMessage());
-            }
-        } else if ("toggle".equals(action)) {
-            // Handle toggling public key availability
+        } else if ("lost".equals(action)) {
+            // Handle marking a key as lost
             try {
                 Pubkey pubkey = pubkeyDAO.getPubkeyByUserId(userId);
-                if (pubkey != null) {
-                    pubkey.setAvailable(!pubkey.isAvailable());
+                if (pubkey != null && pubkey.isAvailable()) {
+                    pubkey.setAvailable(false);
                     pubkeyDAO.updatePubkey(pubkey);
-                    String status = pubkey.isAvailable() ? "enabled" : "disabled";
-                    request.setAttribute("success", "Public key " + status + " successfully");
+                    request.setAttribute("success", "Your key has been marked as lost. Please upload a new key.");
+                } else if (pubkey != null && !pubkey.isAvailable()) {
+                    request.setAttribute("error", "This key is already marked as lost.");
                 }
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error toggling public key availability", e);
-                request.setAttribute("error", "Error toggling public key availability: " + e.getMessage());
+                LOGGER.log(Level.SEVERE, "Error marking key as lost", e);
+                request.setAttribute("error", "Error marking key as lost: " + e.getMessage());
             }
         }
 

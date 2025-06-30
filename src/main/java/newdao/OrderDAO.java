@@ -41,6 +41,27 @@ public class OrderDAO {
             order.setUserId(rs.getInt("uId"));
             order.setOrderDate(rs.getDate("orderDate"));
             order.setTotal(rs.getBigDecimal("total"));
+            // Handle the verify column, which might be null for existing orders
+            try {
+                order.setVerify(rs.getBoolean("verify"));
+            } catch (SQLException e) {
+                // If the column doesn't exist or is null, set verify to false
+                order.setVerify(false);
+            }
+            // Handle the signature column, which might be null for existing orders
+            try {
+                order.setSignature(rs.getBytes("signature"));
+            } catch (SQLException e) {
+                // If the column doesn't exist or is null, set signature to null
+                order.setSignature(null);
+            }
+            // Handle the payment column, which might be null for existing orders
+            try {
+                order.setPayment(rs.getString("payment"));
+            } catch (SQLException e) {
+                // If the column doesn't exist or is null, set payment to null
+                order.setPayment(null);
+            }
             return order;
         }
     }
@@ -111,5 +132,38 @@ public class OrderDAO {
 
     public Shipping getShippingByOrderId(int orderId) {
         return shippingRepo.getShippingByOrderId(orderId).orElse(null);
+    }
+
+    /**
+     * Updates the verification status of an order
+     * 
+     * @param orderId The ID of the order to update
+     * @param verify The new verification status
+     * @return true if the update was successful, false otherwise
+     */
+    public boolean updateOrderVerification(int orderId, boolean verify) {
+        return orderRepo.updateOrderVerification(orderId, verify);
+    }
+
+    /**
+     * Updates the signature of an order
+     * 
+     * @param orderId The ID of the order to update
+     * @param signature The new signature
+     * @return true if the update was successful, false otherwise
+     */
+    public boolean updateOrderSignature(int orderId, byte[] signature) {
+        return orderRepo.updateOrderSignature(orderId, signature);
+    }
+
+    /**
+     * Updates the payment type of an order
+     * 
+     * @param orderId The ID of the order to update
+     * @param payment The new payment type
+     * @return true if the update was successful, false otherwise
+     */
+    public boolean updateOrderPayment(int orderId, String payment) {
+        return orderRepo.updateOrderPayment(orderId, payment);
     }
 }

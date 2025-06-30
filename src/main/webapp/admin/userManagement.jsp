@@ -268,15 +268,16 @@
                     });
                 });
             </script>
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <!-- DataTables JS -->
             <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+            <!-- DataTables CSS -->
             <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
-            
+
             <script>
             $(document).ready(function() {
                 $('#usersTable').DataTable({
                     ajax: {
-                        url: '../userManagement',  // Updated path to servlet
+                        url: 'userManagement',  // Path to servlet in the same directory
                         method: 'GET',
                         dataSrc: function(response) {
                             return response;  // Process the JSON response from server
@@ -311,16 +312,16 @@
                             }
                         }
                     ],
-                
+
                 });
-            
+
                 // Event handlers for edit and delete buttons
                 $('#usersTable').on('click', '.edit-btn', function() {
                     const userId = $(this).data('id');
                     // Add your edit logic here
                     console.log('Edit user:', userId);
                 });
-            
+
                 $('#usersTable').on('click', '.delete-btn', function() {
                     const userId = $(this).data('id');
                     if (confirm('Bạn có chắc muốn xoá người dùng này?')) {
