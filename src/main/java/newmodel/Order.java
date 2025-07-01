@@ -17,6 +17,7 @@ public class Order {
     private boolean verify;
     private byte[] signature;
     private String payment;
+    private Integer pubkeyId;
     private List<OrderDetail> orderDetails;
 
     // Constructors
@@ -31,6 +32,7 @@ public class Order {
         this.verify = false;
         this.signature = null;
         this.payment = null;
+        this.pubkeyId = null;
     }
 
     public Order(int id, int userId, Date orderDate, BigDecimal total, boolean verify) {
@@ -41,6 +43,7 @@ public class Order {
         this.verify = verify;
         this.signature = null;
         this.payment = null;
+        this.pubkeyId = null;
     }
 
     public Order(int id, int userId, Date orderDate, BigDecimal total, boolean verify, byte[] signature) {
@@ -51,6 +54,7 @@ public class Order {
         this.verify = verify;
         this.signature = signature;
         this.payment = null;
+        this.pubkeyId = null;
     }
 
     public Order(int id, int userId, Date orderDate, BigDecimal total, boolean verify, byte[] signature, String payment) {
@@ -61,6 +65,18 @@ public class Order {
         this.verify = verify;
         this.signature = signature;
         this.payment = payment;
+        this.pubkeyId = null;
+    }
+
+    public Order(int id, int userId, Date orderDate, BigDecimal total, boolean verify, byte[] signature, String payment, Integer pubkeyId) {
+        this.id = id;
+        this.userId = userId;
+        this.orderDate = orderDate;
+        this.total = total;
+        this.verify = verify;
+        this.signature = signature;
+        this.payment = payment;
+        this.pubkeyId = pubkeyId;
     }
 
     // Getters and Setters
@@ -128,6 +144,14 @@ public class Order {
         this.payment = payment;
     }
 
+    public Integer getPubkeyId() {
+        return pubkeyId;
+    }
+
+    public void setPubkeyId(Integer pubkeyId) {
+        this.pubkeyId = pubkeyId;
+    }
+
     @Override
     public String toString() {
         return "Order{" +
@@ -138,6 +162,7 @@ public class Order {
                 ", verify=" + verify +
                 ", signature=" + (signature != null ? Arrays.toString(signature) : "null") +
                 ", payment='" + payment + '\'' +
+                ", pubkeyId=" + pubkeyId +
                 '}';
     }
 }

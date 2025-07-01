@@ -25,4 +25,6 @@ public interface PubkeyRepository {
     @SqlUpdate("UPDATE pubkey SET avalible = :available WHERE id = :id")
     boolean updatePubkey(@BindBean Pubkey pubkey);
 
+    @SqlQuery("SELECT * FROM pubkey WHERE id = :id")
+    Optional<Pubkey> getPubkeyById(@Bind("id") int id);
 }

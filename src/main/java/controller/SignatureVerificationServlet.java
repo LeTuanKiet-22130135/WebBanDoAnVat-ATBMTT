@@ -143,6 +143,9 @@ public class SignatureVerificationServlet extends HttpServlet {
                 // Store the signature data
                 orderDAO.updateOrderSignature(pendingOrderId, signatureBytes);
 
+                // Store the pubkey ID used for verification
+                orderDAO.updateOrderPubkeyId(pendingOrderId, pubkey.getId());
+
                 // Store payment method in session
                 session.setAttribute("paymentMethod", paymentMethod);
 

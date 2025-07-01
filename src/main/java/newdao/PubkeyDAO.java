@@ -36,6 +36,10 @@ public class PubkeyDAO {
         return pubkeyRepo.getPubkeyByUserId(userId).orElse(null);
     }
 
+    public Pubkey getPubkeyById(int id) {
+        return pubkeyRepo.getPubkeyById(id).orElse(null);
+    }
+
     public boolean hasPubkey(int userId) {
         return pubkeyRepo.getPubkeyByUserId(userId).isPresent();
     }

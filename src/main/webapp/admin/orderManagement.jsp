@@ -130,6 +130,7 @@
                                         <th>Ngày đặt</th>
                                         <th>Giá</th>
                                         <th>Trạng thái</th>
+                                        <th>Phương thức thanh toán</th>
                                         <th>Thao tác</th>
                                     </tr>
                                     </thead>
@@ -156,8 +157,6 @@
 <script src="js/plugins/bootstrap-notify.js"></script>
 <!-- Control Center for Black Dashboard: parallax effects, scripts for the example pages etc -->
 <script src="js/black-dashboard.min.js?v=1.0.0"></script>
-<!-- Black Dashboard DEMO methods, don't include it in your project! -->
-<script src="demo/demo.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     $(document).ready(function () {
@@ -269,7 +268,6 @@
         });
     });
 </script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function () {
@@ -279,29 +277,165 @@
                 table.clear();
 
                 data.forEach(order => {
+                    const id = order.id;
+                    console.log("Order ID:", id);
+                    const btn1 = `<button class="btn btn-primary btn-sm edit-btn" data-id=` + id + ` data-price=` + order.total + ` data-payment=` + order.payment + `>`;
+                    const btn2 = `<button class="btn btn-info btn-sm check-integrity-btn" data-id=` + id + `>`;
+                    const btn = btn1 + btn2;
                     table.row.add([
                         order.id,
                         order.username,
-                        order.date,
-                        order.price,
-                        order.status == 0 ? "Chờ thanh toán" : order.status == 1 ? "Thất bại" : "Thành công",
-                        `<button class="btn btn-success btn-sm edit-btn">
-                            <i class="tim-icons icon-pencil"></i>
-                        </button>
-                        <button class="btn btn-danger btn-sm delete-btn">
-                            <i class="tim-icons icon-simple-delete"></i>
-                        </button>`
+                        order.orderdate,
+                        order.total,
+                        order.status == 0 ? "Chờ thanh toán"
+                            : order.status == 1 ? "Thất bại"
+                                : "Thành công",
+                        order.payment || "N/A",
+                        // Using string concatenation for the buttons:
+                        '<button class="btn btn-primary btn-sm edit-btn" data-id="' + order.id +
+                        '" data-price="' + order.total +
+                        '" data-payment="' + (order.payment || '') + '">' +
+                        '<i class="tim-icons icon-pencil"></i> Sửa' +
+                        '</button>' +
+                        '<button class="btn btn-info btn-sm check-integrity-btn" data-id="' + order.id + '">' +
+                        '<i class="tim-icons icon-check-2"></i> Kiểm tra' +
+                        '</button>'
                     ]).draw();
                 });
 
-            },);
+                // Add event listeners for edit buttons using event delegation
+                $('#ordersTable').on('click', '.edit-btn', function() {
+                    const id = $(this).data('id');
+                    const price = $(this).data('price');
+                    const payment = $(this).data('payment');
+
+                    $('#editOrderId').val(id);
+                    $('#editOrderPrice').val(price);
+                    $('#editOrderPayment').val(payment);
+
+                    $('#editOrderModal').modal('show');
+                });
+
+                $('#ordersTable').on('click', '.check-integrity-btn', function() {
+                    const id = $(this).data('id');
+                    console.log("Checking order:", id, ", type: ", typeof id);  // Debug log
+                    checkOrderIntegrity(id);
+                });
+            });
         }
+
+        // Function to check order integrity
+        function checkOrderIntegrity(orderId) {
+            // Remove parseInt conversion - use orderId directly
+            if (!orderId) {
+                showNotification('danger', 'Invalid order ID');
+                return;
+            }
+
+            $.post("orderManagementServlet", {
+                action: "checkIntegrity",
+                orderId: orderId.toString()  // Ensure it's string
+            }, function(response) {
+                if (response.success) {
+                    showNotification('success', response.message);
+                } else {
+                    showNotification('danger', response.message);
+                }
+            });
+        }
+
+        // Function to show notifications
+        function showNotification(type, message) {
+            $.notify({
+                icon: type === 'success' ? "tim-icons icon-check-2" : "tim-icons icon-alert-circle-exc",
+                message: message
+            }, {
+                type: type,
+                timer: 4000,
+                placement: {
+                    from: 'top',
+                    align: 'right'
+                },
+                onShow: function(notification) {
+                    // Find the element containing the message and set its text color to white
+                    notification.find('.alert')
+                        .css('color', 'black');
+                }
+            });
+        }
+
+        // Handle edit order form submission
+        $('#editOrderForm').submit(function(e) {
+            e.preventDefault();
+
+            const orderId = $('#editOrderId').val();
+            const price = $('#editOrderPrice').val();
+            const payment = $('#editOrderPayment').val();
+
+            $.ajax({
+                url: "orderManagementServlet?action=edit",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    id: orderId,
+                    price: price,
+                    payment: payment
+                }),
+                success: function(response) {
+                    $('#editOrderModal').modal('hide');
+                    if (response.success) {
+                        showNotification('success', response.message);
+                        loadOrders();
+                    } else {
+                        showNotification('danger', response.message);
+                    }
+                },
+                error: function() {
+                    $('#editOrderModal').modal('hide');
+                    showNotification('danger', 'Error updating order');
+                }
+            });
+        });
 
         $('#ordersTable').DataTable();
         loadOrders();
     });
 </script>
 
+<!-- Edit Order Modal -->
+<div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editOrderModalLabel">Chỉnh sửa đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editOrderForm">
+                    <input type="hidden" id="editOrderId">
+                    <div class="mb-3">
+                        <label for="editOrderPrice" class="form-label">Giá</label>
+                        <input type="number" class="form-control" id="editOrderPrice" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editOrderPayment" class="form-label">Phương thức thanh toán</label>
+                        <select class="form-select" id="editOrderPayment" required>
+                            <option value="">Chọn phương thức thanh toán</option>
+                            <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                            <option value="VNPAY">VNPay</option>
+                            <option value="MOMO">MoMo</option>
+                            <option value="BANK">Chuyển khoản ngân hàng</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 

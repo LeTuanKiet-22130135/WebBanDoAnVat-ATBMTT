@@ -94,10 +94,10 @@
                         <form action="pubkey" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="action" value="upload">
                             <div class="form-group">
-                                <label for="pubkeyFile">Select .pub file (RSA 1024-bit)</label>
+                                <label for="pubkeyFile">Select .pem file (RSA 1024-bit)</label>
                                 <input type="file" class="form-control-file" id="pubkeyFile" name="pubkeyFile" required>
                                 <small class="form-text text-muted">
-                                    Upload a .pub file containing your RSA public key (1024 bits).
+                                    Upload a .pem file containing your RSA public key (1024 bits) in PEM format.
                                 </small>
                             </div>
                             <button type="submit" class="btn btn-primary">Upload Key</button>
@@ -118,11 +118,11 @@
                             <ol>
                                 <li>Use OpenSSL or a similar tool to generate your key pair</li>
                                 <li>Keep your private key secure and never share it</li>
-                                <li>Upload only your public key (.pub file) to our system</li>
+                                <li>Upload only your public key (.pem file) to our system</li>
                             </ol>
                             <p><strong>Example OpenSSL command:</strong><br>
                             <code>openssl genrsa -out private.pem 1024</code><br>
-                            <code>openssl rsa -in private.pem -pubout -out public.pub</code></p>
+                            <code>openssl rsa -in private.pem -pubout -out public.pem</code></p>
                         </div>
                     </div>
                 </div>

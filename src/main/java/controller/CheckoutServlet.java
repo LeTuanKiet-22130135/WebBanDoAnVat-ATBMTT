@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import newdao.CartDAO;
 import newdao.OrderDAO;
+import newdao.PubkeyDAO;
 import newdao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -29,6 +30,7 @@ public class CheckoutServlet extends HttpServlet {
     private final OrderDAO orderDAO = new OrderDAO();
     private final CartDAO cartDAO = new CartDAO();
     private final UserDAO userDAO = new UserDAO();
+    private final PubkeyDAO pubkeyDAO = new PubkeyDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -71,8 +73,12 @@ public class CheckoutServlet extends HttpServlet {
         Boolean signatureVerified = (Boolean) session.getAttribute("signatureVerified");
 
         if (!"true".equals(verified) || signatureVerified == null || !signatureVerified) {
+            // Get the user's active pubkey
+            newmodel.Pubkey pubkey = pubkeyDAO.getPubkeyByUserId(userId);
+            Integer pubkeyId = (pubkey != null && pubkey.isAvailable()) ? pubkey.getId() : null;
+
             // First time submission - create order with verify=false
-            int orderId = orderDAO.createOrder(userId, totalAmount, cartItems);
+            int orderId = orderDAO.createOrder(userId, totalAmount, cartItems, pubkeyId);
 
             // Update the payment type in the database
             orderDAO.updateOrderPayment(orderId, paymentMethod);
@@ -112,8 +118,12 @@ public class CheckoutServlet extends HttpServlet {
             // Redirect to VnPay payment servlet
             resp.sendRedirect(req.getContextPath() + "/vnpay-payment?orderRef=" + tempOrderRef + "&amount=" + totalAmount.multiply(new BigDecimal(100)).intValue());
         } else if ("cod".equals(paymentMethod)) {
+            // Get the user's active pubkey
+            newmodel.Pubkey pubkey = pubkeyDAO.getPubkeyByUserId(userId);
+            Integer pubkeyId = (pubkey != null && pubkey.isAvailable()) ? pubkey.getId() : null;
+
             // For COD payment, create the order immediately
-            int orderId = orderDAO.createOrder(userId, totalAmount, cartItems);
+            int orderId = orderDAO.createOrder(userId, totalAmount, cartItems, pubkeyId);
 
             // Update the payment type in the database
             orderDAO.updateOrderPayment(orderId, paymentMethod);

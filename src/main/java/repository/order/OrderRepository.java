@@ -20,9 +20,9 @@ public interface OrderRepository {
     @RegisterRowMapper(OrderDAO.OrderMapper.class)
     List<Order> getOrdersByUserId(@Bind("userId") int userId);
 
-    @SqlUpdate("INSERT INTO orders (uId, orderDate, total) VALUES (:userId, CURDATE(), :total)")
+    @SqlUpdate("INSERT INTO orders (uId, orderDate, total, pubkey_id) VALUES (:userId, CURDATE(), :total, :pubkeyId)")
     @GetGeneratedKeys("id")
-    int createOrder(@Bind("userId") int userId, @Bind("total") BigDecimal total);
+    int createOrder(@Bind("userId") int userId, @Bind("total") BigDecimal total, @Bind("pubkeyId") Integer pubkeyId);
 
     @SqlQuery("SELECT * FROM orders WHERE id = :orderId")
     @RegisterRowMapper(OrderDAO.OrderMapper.class)
@@ -36,4 +36,7 @@ public interface OrderRepository {
 
     @SqlUpdate("UPDATE orders SET payment = :payment WHERE id = :orderId")
     boolean updateOrderPayment(@Bind("orderId") int orderId, @Bind("payment") String payment);
+
+    @SqlUpdate("UPDATE orders SET pubkey_id = :pubkeyId WHERE id = :orderId")
+    boolean updateOrderPubkeyId(@Bind("orderId") int orderId, @Bind("pubkeyId") int pubkeyId);
 }

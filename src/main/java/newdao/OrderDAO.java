@@ -62,6 +62,16 @@ public class OrderDAO {
                 // If the column doesn't exist or is null, set payment to null
                 order.setPayment(null);
             }
+            // Handle the pubkey_id column, which might be null for existing orders
+            try {
+                int pubkeyId = rs.getInt("pubkey_id");
+                if (!rs.wasNull()) {
+                    order.setPubkeyId(pubkeyId);
+                }
+            } catch (SQLException e) {
+                // If the column doesn't exist or is null, set pubkeyId to null
+                order.setPubkeyId(null);
+            }
             return order;
         }
     }
@@ -108,7 +118,12 @@ public class OrderDAO {
 
     @Transaction
     public int createOrder(int userId, BigDecimal totalAmount, List<CartItem> cartItems) {
-        int orderId = orderRepo.createOrder(userId, totalAmount);
+        return createOrder(userId, totalAmount, cartItems, null);
+    }
+
+    @Transaction
+    public int createOrder(int userId, BigDecimal totalAmount, List<CartItem> cartItems, Integer pubkeyId) {
+        int orderId = orderRepo.createOrder(userId, totalAmount, pubkeyId);
         orderDetailRepo.insertOrderDetails(orderId, cartItems);
         return orderId;
     }
@@ -165,5 +180,16 @@ public class OrderDAO {
      */
     public boolean updateOrderPayment(int orderId, String payment) {
         return orderRepo.updateOrderPayment(orderId, payment);
+    }
+
+    /**
+     * Updates the pubkey ID of an order
+     * 
+     * @param orderId The ID of the order to update
+     * @param pubkeyId The ID of the pubkey used to verify the order
+     * @return true if the update was successful, false otherwise
+     */
+    public boolean updateOrderPubkeyId(int orderId, int pubkeyId) {
+        return orderRepo.updateOrderPubkeyId(orderId, pubkeyId);
     }
 }

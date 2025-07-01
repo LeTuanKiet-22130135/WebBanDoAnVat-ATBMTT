@@ -79,10 +79,18 @@ public class CheckIntegrityServlet extends HttpServlet {
                 return;
             }
 
-            // Get the user's public key
-            Pubkey pubkey = pubkeyDAO.getPubkeyByUserId(userId);
-            if (pubkey == null || !pubkey.isAvailable()) {
-                request.setAttribute("errorMessage", "You don't have an active public key.");
+            // Check if the order has a pubkey_id
+            Integer pubkeyId = order.getPubkeyId();
+            if (pubkeyId == null) {
+                request.setAttribute("errorMessage", "This order does not have a reference to the public key used for verification.");
+                request.getRequestDispatcher("orderhistory").forward(request, response);
+                return;
+            }
+
+            // Get the public key referenced by the pubkey_id in the order
+            Pubkey pubkey = pubkeyDAO.getPubkeyById(pubkeyId);
+            if (pubkey == null) {
+                request.setAttribute("errorMessage", "The public key referenced by this order could not be found.");
                 request.getRequestDispatcher("orderhistory").forward(request, response);
                 return;
             }
